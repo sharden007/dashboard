@@ -1,5 +1,5 @@
-Convert the csv data file to json using csv_json or Prep_data python files.
-Take a small sample fot the data then:
+Convert the csv data file to json using csv_json or preferred Prep_data python files.
+Take a small sample fot  the data then:
 👉 Prompt 1
 This is the structure of my sales data in JSON format. Understand the structure and suggest five key data visualization metrics that would be the best fit to create an interactive sales dashboard. Also explain why we should use each one?
 

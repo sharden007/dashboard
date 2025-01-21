@@ -1,10 +1,10 @@
 import pandas as pd
 
 # Read the CSV file
-df = pd.read_csv('dataset.csv')
+df = pd.read_csv('purchase_data.csv')
 
 # Convert to JSON and save as a valid JSON array
-with open('dataset.json', 'w') as json_file:
+with open('purchase_data.json', 'w') as json_file:
     json_file.write('[')  # Start the JSON array
     df.to_json(json_file, orient='records', lines=True)
     json_file.seek(json_file.tell() - 1, 0)  # Move back to overwrite the last newline
