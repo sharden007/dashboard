@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Performance Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Interactive Sales Performance Dashboard</h1>
+    <input type="file" id="fileInput" accept="application/json">
+    <div id="dashboard">
+        <div id="salesByState" style="width: 100%; height: 400px;"></div>
+        <div id="salesByCategory" style="width: 100%; height: 400px;"></div>
+        <div id="customerDemographics" style="width: 100%; height: 400px;"></div>
+        <div id="salesTrends" style="width: 100%; height: 400px;"></div>
+        <div id="profitMargin" style="width: 100%; height: 400px;"></div>
+    </div>
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    let rawData = e.target.result.trim();
+                    // Wrap multiple root objects into an array if necessary
+                    if (!rawData.startsWith('[')) {
+                        rawData = `[${rawData.replace(/\}\s*\{/g, '},{')}]`;
+                    }
+                    try {
+                        const data = JSON.parse(rawData);
+
+                        // Process only a subset of data for initial rendering
+                        const subset = data.slice(0, 100); // Limit to first 100 records
+                        generateDashboard(subset);
+                    } catch (error) {
+                        console.error("Invalid JSON format:", error);
+                        alert("The uploaded file contains invalid JSON. Please check the format.");
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        function generateDashboard(data) {
+            // Sales Revenue by State
+            const stateData = {};
+            data.forEach(item => {
+                if (!stateData[item.State]) {
+                    stateData[item.State] = 0;
+                }
+                stateData[item.State] += item.SalesRevenue;
+            });
+            const states = Object.keys(stateData);
+            const revenues = Object.values(stateData);
+            Plotly.newPlot('salesByState', [{
+                x: states,
+                y: revenues,
+                type: 'bar'
+            }], { title: 'Sales Revenue by State' });
+
+            // Sales Revenue and Profit by Product Category/Subcategory
+            const categoryData = {};
+            data.forEach(item => {
+                const category = item.ProductCategory + ' - ' + item.ProductSubcategory;
+                if (!categoryData[category]) {
+                    categoryData[category] = { revenue: 0, profit: 0 };
+                }
+                categoryData[category].revenue += item.SalesRevenue;
+                categoryData[category].profit += item.Profit;
+            });
+            const categories = Object.keys(categoryData);
+            const categoryRevenues = categories.map(cat => categoryData[cat].revenue);
+            const categoryProfits = categories.map(cat => categoryData[cat].profit);
+            Plotly.newPlot('salesByCategory', [{
+                x: categories,
+                y: categoryRevenues,
+                name: 'Revenue',
+                type: 'bar'
+            }, {
+                x: categories,
+                y: categoryProfits,
+                name: 'Profit',
+                type: 'bar'
+            }], { title: 'Sales and Profit by Product Category/Subcategory', barmode: 'group' });
+
+            // Customer Demographics Analysis
+            const demographicsData = {};
+            data.forEach(item => {
+                const group = item.CustomerAgeGroup + ' - ' + item.CustomerIncomeLevel;
+                if (!demographicsData[group]) {
+                    demographicsData[group] = 0;
+                }
+                demographicsData[group] += item.SalesRevenue;
+            });
+            const demographicGroups = Object.keys(demographicsData);
+            const demographicRevenues = Object.values(demographicsData);
+            Plotly.newPlot('customerDemographics', [{
+                x: demographicGroups,
+                y: demographicRevenues,
+                type: 'bar'
+            }], { title: 'Customer Demographics Analysis' });
+
+            // Sales Trends Over Time
+            const timeData = {};
+            data.forEach(item => {
+                if (!timeData[item.Date]) {
+                    timeData[item.Date] = 0;
+                }
+                timeData[item.Date] += item.SalesRevenue;
+            });
+            const dates = Object.keys(timeData);
+            const timeRevenues = Object.values(timeData);
+            Plotly.newPlot('salesTrends', [{
+                x: dates,
+                y: timeRevenues,
+                type: 'scatter'
+            }], { title: 'Sales Trends Over Time' });
+
+            // Profit Margin Analysis
+            const profitMarginData = [];
+            data.forEach(item => {
+                if (item.SalesRevenue > 0) {
+                    profitMarginData.push({
+                        x: item.SalesRevenue,
+                        y: item.Profit / item.SalesRevenue
+                    });
+                }
+            });
+            Plotly.newPlot('profitMargin', [{
+                x: profitMarginData.map(d => d.x),
+                y: profitMarginData.map(d => d.y),
+                mode: 'markers',
+                type: 'scatter'
+            }], { title: 'Profit Margin Analysis' });
+        }
+    </script>
+</body>
+</html>
